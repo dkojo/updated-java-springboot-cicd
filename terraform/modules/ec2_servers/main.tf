@@ -7,27 +7,60 @@ locals {
 
 # ----------------------------
 # Security Groups (real ports)
-# ----------------------------
 
 # Ansible: SSH only
 resource "aws_security_group" "ansible_sg" {
   name   = "ansible_sg"
   vpc_id = var.vpc_id
 
-  ingress { from_port = 22 to_port = 22 protocol = "tcp" cidr_blocks = [local.ssh_cidr] }
-  egress  { from_port = 0  to_port = 0  protocol = "-1"  cidr_blocks = ["0.0.0.0/0"] }
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [local.ssh_cidr]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
+
 
 # Monitoring: SSH + Grafana(3000) + Prometheus(9090)
 resource "aws_security_group" "monitoring_sg" {
   name   = "monitoring_sg"
   vpc_id = var.vpc_id
 
-  ingress { from_port = 22   to_port = 22   protocol = "tcp" cidr_blocks = [local.ssh_cidr] }
-  ingress { from_port = 3000 to_port = 3000 protocol = "tcp" cidr_blocks = ["0.0.0.0/0"] }
-  ingress { from_port = 9090 to_port = 9090 protocol = "tcp" cidr_blocks = ["0.0.0.0/0"] }
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [local.ssh_cidr]
+  }
 
-  egress  { from_port = 0 to_port = 0 protocol = "-1" cidr_blocks = ["0.0.0.0/0"] }
+  ingress {
+    from_port   = 3000
+    to_port     = 3000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 9090
+    to_port     = 9090
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
 
 # Monolithic: SSH + HTTP/HTTPS
@@ -35,11 +68,33 @@ resource "aws_security_group" "monolithic_sg" {
   name   = "monolithic_sg"
   vpc_id = var.vpc_id
 
-  ingress { from_port = 22  to_port = 22  protocol = "tcp" cidr_blocks = [local.ssh_cidr] }
-  ingress { from_port = 80  to_port = 80  protocol = "tcp" cidr_blocks = ["0.0.0.0/0"] }
-  ingress { from_port = 443 to_port = 443 protocol = "tcp" cidr_blocks = ["0.0.0.0/0"] }
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [local.ssh_cidr]
+  }
 
-  egress  { from_port = 0 to_port = 0 protocol = "-1" cidr_blocks = ["0.0.0.0/0"] }
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
 
 # Nexus: SSH + 8081
@@ -47,10 +102,26 @@ resource "aws_security_group" "nexus_sg" {
   name   = "nexus_sg"
   vpc_id = var.vpc_id
 
-  ingress { from_port = 22   to_port = 22   protocol = "tcp" cidr_blocks = [local.ssh_cidr] }
-  ingress { from_port = 8081 to_port = 8081 protocol = "tcp" cidr_blocks = ["0.0.0.0/0"] }
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [local.ssh_cidr]
+  }
 
-  egress  { from_port = 0 to_port = 0 protocol = "-1" cidr_blocks = ["0.0.0.0/0"] }
+  ingress {
+    from_port   = 8081
+    to_port     = 8081
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
 
 # SonarQube: SSH + 9000
@@ -58,10 +129,26 @@ resource "aws_security_group" "sonarqube_sg" {
   name   = "sonarqube_sg"
   vpc_id = var.vpc_id
 
-  ingress { from_port = 22   to_port = 22   protocol = "tcp" cidr_blocks = [local.ssh_cidr] }
-  ingress { from_port = 9000 to_port = 9000 protocol = "tcp" cidr_blocks = ["0.0.0.0/0"] }
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [local.ssh_cidr]
+  }
 
-  egress  { from_port = 0 to_port = 0 protocol = "-1" cidr_blocks = ["0.0.0.0/0"] }
+  ingress {
+    from_port   = 9000
+    to_port     = 9000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
 
 # ----------------------------
