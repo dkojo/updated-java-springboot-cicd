@@ -50,7 +50,7 @@ variable "healthcheck_path" {
 variable "instance_ami" {
   description = "AMI ID for the instances"
   type        = string
-  default     = "ami-0453ec754f44f9a4a"
+  default     = "ami-0f3caa1cf4417e51b"
 }
 
 variable "instance_key_name" {
