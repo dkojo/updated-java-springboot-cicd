@@ -6,46 +6,29 @@ pipeline {
     }
 
     parameters {
-        string(
-            name: 'GITHUB_CREDENTIAL',
-            defaultValue: 'github_creds',
-            description: 'GitHub access credentials id'
-        )
-        string(
-            name: 'GITHUB_REPO_URL',
-            defaultValue: 'https://github.com/dkojo/updated-java-springboot-cicd.git',
-            description: 'GitHub repository URL'
-        )
-        string(
-            name: 'GITHUB_BRANCH',
-            defaultValue: 'main',
-            description: 'GitHub branch for your build'
-        )
+        string(name: 'GITHUB_CREDENTIAL', defaultValue: 'github_creds', description: 'GitHub credentials id')
+        string(name: 'GITHUB_REPO_URL', defaultValue: 'https://github.com/dkojo/updated-java-springboot-cicd.git', description: 'GitHub repository URL')
+        string(name: 'GITHUB_BRANCH', defaultValue: 'main', description: 'GitHub branch')
+
         choice(
             name: 'TERRAFORM_ACTION',
             choices: ['', 'apply', 'destroy'],
-            description: 'Select Terraform action: apply or destroy'
+            description: 'Terraform action'
         )
-        // Optional but recommended: set AWS region for Terraform/provider/AWS SDK defaults.
+
         string(
             name: 'AWS_REGION',
             defaultValue: 'us-east-1',
-            description: 'AWS region (used as AWS_DEFAULT_REGION/AWS_REGION)'
+            description: 'AWS region'
         )
     }
 
     environment {
-        // Git inputs
-        GITHUB_CREDENTIAL = "${params.GITHUB_CREDENTIAL}"
-        GITHUB_REPO_URL   = "${params.GITHUB_REPO_URL}"
-        GITHUB_BRANCH     = "${params.GITHUB_BRANCH}"
-
-        // Terraform input
-        TERRAFORM_ACTION  = "${params.TERRAFORM_ACTION}"
-
-        // AWS region defaults (no static keys; relies on instance profile / task role / IRSA)
         AWS_DEFAULT_REGION = "${params.AWS_REGION}"
         AWS_REGION         = "${params.AWS_REGION}"
+
+        // Terraform working directory
+        TF_WORKDIR = "terraform/live/prod"
     }
 
     stages {
@@ -54,13 +37,13 @@ pipeline {
             steps {
                 script {
                     if (!params.TERRAFORM_ACTION?.trim()) {
-                        error('TERRAFORM_ACTION is required. Please choose either "apply" or "destroy".')
+                        error('TERRAFORM_ACTION is required. Choose apply or destroy.')
                     }
                 }
             }
         }
 
-        stage("Checkout Code From GitHub") {
+        stage("Checkout Code") {
             steps {
                 git branch: "${params.GITHUB_BRANCH}",
                     credentialsId: "${params.GITHUB_CREDENTIAL}",
@@ -68,21 +51,19 @@ pipeline {
             }
         }
 
-        stage("AWS Identity Check (Instance Role)") {
+        stage("Verify AWS Role") {
             steps {
                 sh '''
-                    set -e
-                    echo "Checking AWS identity via instance/task role (no keys)..."
+                    echo "Checking AWS identity..."
                     aws sts get-caller-identity
                 '''
             }
         }
 
-        stage('Terraform Init') {
+        stage("Terraform Init") {
             steps {
-                dir("${WORKSPACE}/terraform") {
+                dir("${TF_WORKDIR}") {
                     sh '''
-                        set -e
                         terraform version
                         terraform init
                     '''
@@ -90,23 +71,23 @@ pipeline {
             }
         }
 
-        stage('Terraform Plan') {
+        stage("Terraform Plan") {
             steps {
-                dir("${WORKSPACE}/terraform") {
+                dir("${TF_WORKDIR}") {
                     sh '''
-                        set -e
-                        terraform plan
+                        terraform plan -var-file=../../envs/prod.tfvars
                     '''
                 }
             }
         }
 
-        stage('Terraform Apply Or Destroy') {
+        stage("Terraform Apply / Destroy") {
             steps {
-                dir("${WORKSPACE}/terraform") {
+                dir("${TF_WORKDIR}") {
                     sh """
-                        set -e
-                        terraform ${params.TERRAFORM_ACTION} -auto-approve
+                        terraform ${params.TERRAFORM_ACTION} \
+                        -var-file=../../envs/prod.tfvars \
+                        -auto-approve
                     """
                 }
             }
