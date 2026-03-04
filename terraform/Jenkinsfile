@@ -9,7 +9,7 @@ pipeline {
         string(name: 'GITHUB_REPO_URL', defaultValue: 'https://github.com/dkojo/updated-java-springboot-cicd.git', description: 'Github repository url')
         string(name: 'GITHUB_BRANCH', defaultValue: 'main', description: 'Github branch for your build')
         choice(name: 'TERRAFORM_ACTION', choices: ['', 'apply', 'destroy'], description: 'Select Terraform action: Apply or Destroy')
-        string(name: 'AWS_CREDENTIAL_ID', defaultValue: 'aws_creds', description: 'AWS credentials id')
+        
     }
 
     environment {
@@ -17,7 +17,7 @@ pipeline {
         GITHUB_REPO_URL = "${params.GITHUB_REPO_URL}"
         GITHUB_BRANCH = "${params.GITHUB_BRANCH}"
         TERRAFORM_ACTION = "${params.TERRAFORM_ACTION}"
-        AWS_CREDENTIAL_ID = "${params.AWS_CREDENTIAL_ID}"
+        
     }
 
     stages {
