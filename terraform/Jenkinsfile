@@ -60,6 +60,18 @@ pipeline {
             }
         }
 
+        stage("Terraform Format Check") {
+  steps {
+    dir("${TF_WORKDIR}") {
+      sh '''
+        set -e
+        terraform fmt -check -recursive ../../modules
+        terraform fmt -check
+      '''
+    }
+  }
+}
+
         stage("Terraform Init") {
             steps {
                 dir("${TF_WORKDIR}") {
