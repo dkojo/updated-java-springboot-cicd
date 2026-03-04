@@ -5,13 +5,5 @@
       "repo": "https://github.com/dkojo/updated-java-springboot-cicd.git",
       "branch": "main",
       "jenkinsfile": "terraform/Jenkinsfile"
-    },
-
-    {
-      "name": "create-update-secrets-manager-pipeline",
-      "repo": "https://github.com/dkojo/updated-java-springboot-cicd.git",
-      "branch": "main",
-      "jenkinsfile": "terraform/Jenkinsfile"
     }
-
 ]
