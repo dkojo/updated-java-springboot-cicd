@@ -65,3 +65,14 @@ module "ecs" {
 
   depends_on = [module.alb]
 }
+
+module "ec2_servers" {
+  source = "../../modules/ec2_servers"
+
+  vpc_id                    = var.vpc_id
+  instance_ami              = var.instance_ami
+  instance_key_name         = var.instance_key_name
+  instance_subnet_id        = var.instance_subnet_id
+  instance_type             = var.instance_type
+  sonar_nexus_instance_type = var.sonar_nexus_instance_type
+}

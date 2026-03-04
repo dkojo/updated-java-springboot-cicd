@@ -46,3 +46,33 @@ variable "healthcheck_path" {
   type        = string
   default     = "/"
 }
+
+variable "instance_ami" {
+  description = "AMI ID for the instances"
+  type        = string
+  default     = "ami-0453ec754f44f9a4a"
+}
+
+variable "instance_key_name" {
+  description = "An Existing Keypair to be used for the instances"
+  type        = string
+  default     = "itgkey"
+}
+
+variable "instance_subnet_id" {
+  description = "Public Subnet ID for the instances"
+  type        = string
+  default     = "subnet-0305d0946c139cda7"
+}
+
+variable "instance_type" {
+  description = "The Instance type"
+  type        = string
+  default     = "t2.micro"
+}
+
+variable "sonar_nexus_instance_type" {
+  description = "The Instance type"
+  type        = string
+  default     = "t2.medium"
+}
