@@ -46,24 +46,24 @@ resource "aws_secretsmanager_secret_version" "db" {
 }
 
 resource "aws_db_instance" "app" {
-  identifier             = "${var.app_name}-mysql"
-  engine                 = "mysql"
-  engine_version         = "8.0"
-  instance_class         = "db.t3.micro"
+  identifier     = "${var.app_name}-mysql"
+  engine         = "mysql"
+  engine_version = "8.0"
+  instance_class = "db.t3.micro"
 
-  allocated_storage      = 20
-  storage_type           = "gp2"
+  allocated_storage = 20
+  storage_type      = "gp2"
 
-  db_name                = "itgeniusdb"
-  username               = "appuser"
-  password               = random_password.db.result
+  db_name  = "itgeniusdb"
+  username = "appuser"
+  password = random_password.db.result
 
   db_subnet_group_name   = aws_db_subnet_group.app.name
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
 
-  publicly_accessible    = false
-  multi_az               = false
+  publicly_accessible = false
+  multi_az            = false
 
-  skip_final_snapshot    = true
-  deletion_protection    = false
+  skip_final_snapshot = true
+  deletion_protection = false
 }
