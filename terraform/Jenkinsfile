@@ -1,31 +1,60 @@
 pipeline {
     agent any
+
     options {
         timeout(time: 40, unit: 'MINUTES')
     }
 
     parameters {
-        string(name: 'GITHUB_CREDENTIAL', defaultValue: 'github_creds', description: 'Github access credentials id')
-        string(name: 'GITHUB_REPO_URL', defaultValue: 'https://github.com/dkojo/updated-java-springboot-cicd.git', description: 'Github repository url')
-        string(name: 'GITHUB_BRANCH', defaultValue: 'main', description: 'Github branch for your build')
-        choice(name: 'TERRAFORM_ACTION', choices: ['', 'apply', 'destroy'], description: 'Select Terraform action: Apply or Destroy')
-        string(name: 'AWS_CREDENTIAL_ID', defaultValue: 'aws_creds', description: 'AWS credentials id')
+        string(
+            name: 'GITHUB_CREDENTIAL',
+            defaultValue: 'github_creds',
+            description: 'GitHub access credentials id'
+        )
+        string(
+            name: 'GITHUB_REPO_URL',
+            defaultValue: 'https://github.com/dkojo/updated-java-springboot-cicd.git',
+            description: 'GitHub repository URL'
+        )
+        string(
+            name: 'GITHUB_BRANCH',
+            defaultValue: 'main',
+            description: 'GitHub branch for your build'
+        )
+        choice(
+            name: 'TERRAFORM_ACTION',
+            choices: ['', 'apply', 'destroy'],
+            description: 'Select Terraform action: apply or destroy'
+        )
+        // Optional but recommended: set AWS region for Terraform/provider/AWS SDK defaults.
+        string(
+            name: 'AWS_REGION',
+            defaultValue: 'us-east-1',
+            description: 'AWS region (used as AWS_DEFAULT_REGION/AWS_REGION)'
+        )
     }
 
     environment {
+        // Git inputs
         GITHUB_CREDENTIAL = "${params.GITHUB_CREDENTIAL}"
-        GITHUB_REPO_URL = "${params.GITHUB_REPO_URL}"
-        GITHUB_BRANCH = "${params.GITHUB_BRANCH}"
-        TERRAFORM_ACTION = "${params.TERRAFORM_ACTION}"
-        AWS_CREDENTIAL_ID = "${params.AWS_CREDENTIAL_ID}"
+        GITHUB_REPO_URL   = "${params.GITHUB_REPO_URL}"
+        GITHUB_BRANCH     = "${params.GITHUB_BRANCH}"
+
+        // Terraform input
+        TERRAFORM_ACTION  = "${params.TERRAFORM_ACTION}"
+
+        // AWS region defaults (no static keys; relies on instance profile / task role / IRSA)
+        AWS_DEFAULT_REGION = "${params.AWS_REGION}"
+        AWS_REGION         = "${params.AWS_REGION}"
     }
 
     stages {
+
         stage("Validate Parameters") {
             steps {
                 script {
-                    if (TERRAFORM_ACTION == null || TERRAFORM_ACTION.trim() == '') {
-                        error('TERRAFORM_ACTION is a required parameter. Please choose either "apply" or "destroy".')
+                    if (!params.TERRAFORM_ACTION?.trim()) {
+                        error('TERRAFORM_ACTION is required. Please choose either "apply" or "destroy".')
                     }
                 }
             }
@@ -33,47 +62,60 @@ pipeline {
 
         stage("Checkout Code From GitHub") {
             steps {
-                script {
-                    git branch: "${GITHUB_BRANCH}", credentialsId: "${GITHUB_CREDENTIAL}", url: "${GITHUB_REPO_URL}"
-                }
+                git branch: "${params.GITHUB_BRANCH}",
+                    credentialsId: "${params.GITHUB_CREDENTIAL}",
+                    url: "${params.GITHUB_REPO_URL}"
+            }
+        }
+
+        stage("AWS Identity Check (Instance Role)") {
+            steps {
+                sh '''
+                    set -e
+                    echo "Checking AWS identity via instance/task role (no keys)..."
+                    aws sts get-caller-identity
+                '''
             }
         }
 
         stage('Terraform Init') {
             steps {
-                script {
-                    // Change into the Terraform code directory
-                    dir("${WORKSPACE}/terraform") {
-                         withCredentials([aws(credentialsId: "${AWS_CREDENTIAL_ID}", accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-                            sh 'terraform init'
-                        }
-                    }
+                dir("${WORKSPACE}/terraform") {
+                    sh '''
+                        set -e
+                        terraform version
+                        terraform init
+                    '''
                 }
             }
         }
 
         stage('Terraform Plan') {
             steps {
-                script {
-                    dir("${WORKSPACE}/terraform") {
-                         withCredentials([aws(credentialsId: "${AWS_CREDENTIAL_ID}", accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-                            sh 'terraform plan'
-                        }
-                    }
+                dir("${WORKSPACE}/terraform") {
+                    sh '''
+                        set -e
+                        terraform plan
+                    '''
                 }
             }
         }
 
         stage('Terraform Apply Or Destroy') {
             steps {
-                script {
-                    dir("${WORKSPACE}/terraform") {
-                         withCredentials([aws(credentialsId: "${AWS_CREDENTIAL_ID}", accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-                            sh 'terraform "${TERRAFORM_ACTION}" -auto-approve'
-                        }
-                    }
+                dir("${WORKSPACE}/terraform") {
+                    sh """
+                        set -e
+                        terraform ${params.TERRAFORM_ACTION} -auto-approve
+                    """
                 }
             }
+        }
+    }
+
+    post {
+        always {
+            echo "Pipeline finished with status: ${currentBuild.currentResult}"
         }
     }
 }
